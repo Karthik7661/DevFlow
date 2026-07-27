@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import api from '@/lib/axios';
 
@@ -22,6 +22,7 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   fetchProfile: () => Promise<void>;
   initializeAuth: () => () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -51,5 +52,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ loading: false });
     });
     return unsubscribe;
+  },
+  logout: async () => {
+    try {
+      await signOut(auth);
+      set({ user: null, profile: null });
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
   },
 }));
