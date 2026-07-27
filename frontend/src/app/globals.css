@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #050505;
-  --color-foreground: #ededed;
+  --color-background: #ffffff;
+  --color-foreground: #09090b;
   
-  --color-border: #222222;
-  --color-input: #1a1a1a;
-  --color-ring: #444444;
+  --color-border: #e4e4e7;
+  --color-input: #f4f4f5;
+  --color-ring: #d4d4d8;
 
-  --color-primary: #ffffff;
-  --color-primary-foreground: #000000;
+  --color-primary: #18181b;
+  --color-primary-foreground: #ffffff;
 
-  --color-secondary: #1a1a1a;
-  --color-secondary-foreground: #ffffff;
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #18181b;
 
-  --color-muted: #111111;
-  --color-muted-foreground: #888888;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
 
-  --color-accent: #1f1f1f;
-  --color-accent-foreground: #ffffff;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #18181b;
 
-  --color-destructive: #ff4545;
+  --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
 
   --radius-sm: 0.25rem;
@@ -34,6 +34,34 @@
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark {
+    --color-background: #050505;
+    --color-foreground: #ededed;
+    --color-border: #222222;
+    --color-input: #1a1a1a;
+    --color-ring: #444444;
+    --color-primary: #ffffff;
+    --color-primary-foreground: #000000;
+    --color-secondary: #1a1a1a;
+    --color-secondary-foreground: #ffffff;
+    --color-muted: #111111;
+    --color-muted-foreground: #888888;
+    --color-accent: #1f1f1f;
+    --color-accent-foreground: #ffffff;
+    --color-destructive: #ff4545;
+    --color-destructive-foreground: #ffffff;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+  }
+  
+  .dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
   }
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -17,10 +18,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground`}>
         <AuthProvider>
-          {children}
+          <ThemeProvider>
+            {children}
           <Toaster 
             position="bottom-right" 
             toastOptions={{
@@ -31,6 +33,7 @@ export default function RootLayout({
               },
             }}
           />
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

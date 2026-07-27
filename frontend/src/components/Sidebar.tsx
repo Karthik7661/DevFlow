@@ -4,8 +4,9 @@ import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useThemeStore } from '@/store/themeStore';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Settings, FolderKanban, LogOut, Plus, LineChart, FileText } from 'lucide-react';
+import { LayoutDashboard, Settings, FolderKanban, LogOut, Plus, LineChart, FileText, Sun, Moon } from 'lucide-react';
 import { Button } from './ui/Button';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -14,6 +15,7 @@ import { useRouter } from 'next/navigation';
 export function Sidebar() {
   const { workspaces, activeWorkspaceId, setActiveWorkspace, loading: workspaceLoading } = useWorkspaceStore();
   const { user } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -91,9 +93,14 @@ export function Sidebar() {
               {user?.email}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
