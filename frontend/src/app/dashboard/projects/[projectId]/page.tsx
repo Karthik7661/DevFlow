@@ -19,6 +19,21 @@ export default function ProjectBoardPage() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editTaskData, setEditTaskData] = useState<Partial<Task>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (selectedTask) {
+      setEditTaskData({
+        title: selectedTask.title,
+        description: selectedTask.description,
+        status: selectedTask.status,
+        priority: selectedTask.priority,
+        assigneeId: selectedTask.assigneeId,
+        dueDate: selectedTask.dueDate,
+      });
+    }
+  }, [selectedTask]);
 
   useEffect(() => {
     if (projectId) {
@@ -43,6 +58,21 @@ export default function ProjectBoardPage() {
       toast.success('Task created');
     } catch {
       toast.error('Failed to create task');
+    }
+  };
+
+  const handleUpdateTaskDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+    setIsSaving(true);
+    try {
+      await updateTask(projectId, selectedTask.id, editTaskData);
+      toast.success('Task updated successfully');
+      setSelectedTask(null);
+    } catch {
+      toast.error('Failed to update task');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -99,54 +129,89 @@ export default function ProjectBoardPage() {
       {/* Task Details Modal */}
       <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
         <DialogContent className="glass sm:max-w-[600px]">
-           <DialogHeader>
-             <DialogTitle className="text-xl pr-4">{selectedTask?.title}</DialogTitle>
-           </DialogHeader>
-           <div className="py-4 space-y-6">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
-                <p className="text-sm mt-1">{selectedTask?.description || 'No description provided.'}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-6 bg-background/50 p-4 rounded-lg border border-border">
+           <form onSubmit={handleUpdateTaskDetails}>
+             <DialogHeader>
+               <input 
+                 className="text-xl pr-4 bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none transition-colors w-full font-semibold mb-2"
+                 value={editTaskData.title || ''}
+                 onChange={(e) => setEditTaskData({ ...editTaskData, title: e.target.value })}
+                 required
+               />
+             </DialogHeader>
+             <div className="py-4 space-y-6">
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
-                  <div className="mt-1 flex items-center">
-                    <span className="bg-accent px-2 py-1 rounded-md text-xs font-medium text-accent-foreground border border-border">
-                      {selectedTask?.status}
-                    </span>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Description</label>
+                  <textarea 
+                    className="w-full min-h-[100px] bg-background/50 border border-border rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+                    placeholder="Add a more detailed description..."
+                    value={editTaskData.description || ''}
+                    onChange={(e) => setEditTaskData({ ...editTaskData, description: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6 bg-background/50 p-4 rounded-lg border border-border">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Status</label>
+                    <select 
+                      className="bg-accent px-2 py-1 rounded-md text-xs font-medium text-accent-foreground border border-border w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={editTaskData.status || 'TODO'}
+                      onChange={(e) => setEditTaskData({ ...editTaskData, status: e.target.value as any })}
+                    >
+                      <option value="BACKLOG">BACKLOG</option>
+                      <option value="TODO">TODO</option>
+                      <option value="IN_PROGRESS">IN PROGRESS</option>
+                      <option value="REVIEW">REVIEW</option>
+                      <option value="TESTING">TESTING</option>
+                      <option value="DONE">DONE</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Priority</label>
+                    <select 
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={editTaskData.priority || 'MEDIUM'}
+                      onChange={(e) => setEditTaskData({ ...editTaskData, priority: e.target.value as any })}
+                    >
+                      <option value="LOW">LOW</option>
+                      <option value="MEDIUM">MEDIUM</option>
+                      <option value="HIGH">HIGH</option>
+                      <option value="CRITICAL">CRITICAL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Assignee</label>
+                    <select 
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={editTaskData.assigneeId || ''}
+                      onChange={(e) => setEditTaskData({ ...editTaskData, assigneeId: e.target.value || null })}
+                    >
+                      <option value="">Unassigned</option>
+                      {activeWorkspaceDetails?.members.map(member => (
+                        <option key={member.userId} value={member.userId}>
+                          {member.user.fullName || member.user.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Due Date</label>
+                    <input 
+                      type="date"
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={editTaskData.dueDate ? new Date(editTaskData.dueDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setEditTaskData({ ...editTaskData, dueDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</label>
-                  <div className="mt-1 flex items-center">
-                    <span className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm">
-                      {selectedTask?.priority}
-                    </span>
-                  </div>
+                <div className="flex justify-end pt-4">
+                  <Button type="button" variant="ghost" className="mr-2" onClick={() => setSelectedTask(null)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assignee</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    {selectedTask?.assignee ? (
-                      <>
-                        <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] uppercase font-bold">
-                          {selectedTask.assignee.email[0]}
-                        </div>
-                        <span className="text-sm">{selectedTask.assignee.fullName || selectedTask.assignee.email}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Unassigned</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Due Date</label>
-                  <p className="text-sm font-medium mt-1 text-muted-foreground">
-                    {selectedTask?.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'No due date'}
-                  </p>
-                </div>
-              </div>
-           </div>
+             </div>
+           </form>
         </DialogContent>
       </Dialog>
     </div>
