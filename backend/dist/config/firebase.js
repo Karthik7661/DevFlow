@@ -38,26 +38,40 @@ const admin = __importStar(require("firebase-admin"));
 // Initialize Firebase Admin SDK
 // You must set the GOOGLE_APPLICATION_CREDENTIALS environment variable
 // to the path of your Firebase Service Account JSON file.
+let auth;
 try {
     if (!admin.apps.length) {
         if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+            console.log("Firebase credentials found. Initializing...");
+            let pk = process.env.FIREBASE_PRIVATE_KEY;
+            if (pk.startsWith('"') && pk.endsWith('"'))
+                pk = pk.slice(1, -1);
+            if (pk.startsWith("'") && pk.endsWith("'"))
+                pk = pk.slice(1, -1);
             admin.initializeApp({
                 credential: admin.credential.cert({
                     projectId: process.env.FIREBASE_PROJECT_ID,
                     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                    privateKey: pk.replace(/\\n/g, '\n'),
                 }),
             });
+            console.log("Firebase initialized successfully!");
         }
         else {
+            console.log("Firebase vars missing. Falling back to default...");
             admin.initializeApp({
                 credential: admin.credential.applicationDefault(),
             });
         }
     }
+    exports.auth = auth = admin.auth();
 }
 catch (error) {
-    console.warn('⚠️ Firebase Admin SDK failed to initialize. Authentication will fail until credentials are provided.', error);
+    console.error('⚠️ Firebase Admin SDK failed to initialize:', error.message);
+    exports.auth = auth = new Proxy({}, {
+        get: () => {
+            throw new Error(`Firebase Auth not initialized: ${error.message}`);
+        }
+    });
 }
-exports.auth = admin.auth();
 //# sourceMappingURL=firebase.js.map
