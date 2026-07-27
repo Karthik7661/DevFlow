@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Task } from '@/store/projectStore';
+import { MessageSquare, Paperclip, Clock } from 'lucide-react';
 
 export function KanbanTask({ task, isOverlay, onClick }: { task: Task, isOverlay?: boolean, onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -45,21 +46,37 @@ export function KanbanTask({ task, isOverlay, onClick }: { task: Task, isOverlay
            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-[4px] border border-current/20 ${priorityColors[task.priority]}`}>
              {task.priority}
            </span>
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2.5 text-muted-foreground">
+             {/* Dummy metrics for premium look */}
+             <div className="flex items-center gap-1 hover:text-primary transition-colors">
+               <MessageSquare className="h-3 w-3" />
+               <span className="text-[10px] font-medium">3</span>
+             </div>
+             <div className="flex items-center gap-1 hover:text-primary transition-colors">
+               <Paperclip className="h-3 w-3" />
+               <span className="text-[10px] font-medium">1</span>
+             </div>
+             
              {task.dueDate && (
-               <span className="text-[10px] font-medium text-muted-foreground bg-accent/50 px-1.5 py-0.5 rounded-sm border border-border">
-                 {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-               </span>
-             )}
-             {task.assignee ? (
-               <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] uppercase font-bold shadow-sm ring-1 ring-primary/20" title={task.assignee.fullName || task.assignee.email}>
-                 {task.assignee.email[0]}
-               </div>
-             ) : (
-               <div className="h-6 w-6 rounded-full bg-accent text-muted-foreground flex items-center justify-center text-[10px] font-bold border border-border border-dashed" title="Unassigned">
-                 ?
+               <div className="flex items-center gap-1 bg-accent/50 px-1.5 py-0.5 rounded-sm border border-border">
+                 <Clock className="h-3 w-3" />
+                 <span className="text-[10px] font-medium">
+                   {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                 </span>
                </div>
              )}
+             
+             <div className="ml-1">
+               {task.assignee ? (
+                 <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] uppercase font-bold shadow-sm ring-1 ring-primary/20" title={task.assignee.fullName || task.assignee.email}>
+                   {task.assignee.email[0]}
+                 </div>
+               ) : (
+                 <div className="h-6 w-6 rounded-full bg-accent text-muted-foreground flex items-center justify-center text-[10px] font-bold border border-border border-dashed" title="Unassigned">
+                   ?
+                 </div>
+               )}
+             </div>
            </div>
         </div>
       </CardContent>
