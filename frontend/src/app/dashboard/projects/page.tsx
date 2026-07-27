@@ -69,7 +69,7 @@ export default function ProjectsPage() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {activeWorkspaceDetails.projects.length === 0 && !isCreating && (
           <div className="col-span-full py-12 text-center text-muted-foreground">
             No projects found. Create one to get started.
@@ -78,21 +78,23 @@ export default function ProjectsPage() {
         {activeWorkspaceDetails.projects.map((project) => (
           <Card 
             key={project.id} 
-            className="glass hover:bg-accent/10 transition-colors cursor-pointer"
+            className="group relative glass hover:bg-accent/20 transition-all duration-300 cursor-pointer overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
             onClick={() => router.push(`/dashboard/projects/${project.id}`)}
           >
-            <CardHeader>
-              <CardTitle>{project.name}</CardTitle>
-              <CardDescription className="truncate">{project.description || 'No description provided.'}</CardDescription>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardHeader className="relative z-10 pb-2">
+              <CardTitle className="text-xl group-hover:text-primary transition-colors">{project.name}</CardTitle>
+              <CardDescription className="truncate mt-1 text-muted-foreground/80">{project.description || 'No description provided.'}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center text-sm mt-4">
-                <span className="bg-accent px-2 py-1 rounded-md text-xs font-medium capitalize border border-border text-primary">
+            <CardContent className="relative z-10 pt-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="bg-background/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold capitalize border border-border text-primary shadow-sm">
                   {project.status.replace('_', ' ').toLowerCase()}
                 </span>
-                <span className="text-muted-foreground capitalize text-xs">
-                  {project.priority.toLowerCase()} priority
-                </span>
+                <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
+                  <div className={`h-2 w-2 rounded-full ${project.priority === 'CRITICAL' ? 'bg-red-500' : project.priority === 'HIGH' ? 'bg-orange-500' : project.priority === 'MEDIUM' ? 'bg-yellow-500' : 'bg-blue-500'}`} />
+                  <span className="capitalize">{project.priority.toLowerCase()}</span>
+                </div>
               </div>
             </CardContent>
           </Card>

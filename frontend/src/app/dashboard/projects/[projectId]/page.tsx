@@ -17,7 +17,7 @@ export default function ProjectBoardPage() {
   const { activeWorkspaceDetails } = useWorkspaceStore();
   
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskData, setNewTaskData] = useState<Partial<Task>>({ status: 'TODO', priority: 'MEDIUM' });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editTaskData, setEditTaskData] = useState<Partial<Task>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -51,9 +51,10 @@ export default function ProjectBoardPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newTaskData.title) return;
     try {
-      await createTask(projectId, { title: newTaskTitle, status: 'TODO', priority: 'MEDIUM' });
-      setNewTaskTitle('');
+      await createTask(projectId, newTaskData);
+      setNewTaskData({ status: 'TODO', priority: 'MEDIUM' });
       setIsNewTaskOpen(false);
       toast.success('Task created');
     } catch {
@@ -106,16 +107,77 @@ export default function ProjectBoardPage() {
               <DialogTitle>Create Task</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateTask} className="space-y-4 pt-4">
-              <Input 
-                placeholder="What needs to be done?" 
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                required
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
+              <input 
+                 className="text-xl pr-4 bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none transition-colors w-full font-semibold mb-2"
+                 placeholder="Task Title"
+                 value={newTaskData.title || ''}
+                 onChange={(e) => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                 required
+                 autoFocus
+               />
+               <textarea 
+                  className="w-full min-h-[80px] bg-background/50 border border-border rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-y mb-4"
+                  placeholder="Add a detailed description..."
+                  value={newTaskData.description || ''}
+                  onChange={(e) => setNewTaskData({ ...newTaskData, description: e.target.value })}
+               />
+               <div className="grid grid-cols-2 gap-4 bg-background/50 p-4 rounded-lg border border-border">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Status</label>
+                    <select 
+                      className="bg-accent px-2 py-1 rounded-md text-xs font-medium text-accent-foreground border border-border w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={newTaskData.status || 'TODO'}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, status: e.target.value as any })}
+                    >
+                      <option value="BACKLOG">BACKLOG</option>
+                      <option value="TODO">TODO</option>
+                      <option value="IN_PROGRESS">IN PROGRESS</option>
+                      <option value="REVIEW">REVIEW</option>
+                      <option value="TESTING">TESTING</option>
+                      <option value="DONE">DONE</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Priority</label>
+                    <select 
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={newTaskData.priority || 'MEDIUM'}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, priority: e.target.value as any })}
+                    >
+                      <option value="LOW">LOW</option>
+                      <option value="MEDIUM">MEDIUM</option>
+                      <option value="HIGH">HIGH</option>
+                      <option value="CRITICAL">CRITICAL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Assignee</label>
+                    <select 
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={newTaskData.assigneeId || ''}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, assigneeId: e.target.value || null })}
+                    >
+                      <option value="">Unassigned</option>
+                      {activeWorkspaceDetails?.members.map(member => (
+                        <option key={member.userId} value={member.userId}>
+                          {member.user.fullName || member.user.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Due Date</label>
+                    <input 
+                      type="date"
+                      className="bg-background px-2 py-1 rounded-md text-xs font-medium border border-border shadow-sm w-full focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={newTaskData.dueDate ? new Date(newTaskData.dueDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, dueDate: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    />
+                  </div>
+               </div>
+              <div className="flex justify-end gap-2 mt-6">
                 <Button type="button" variant="ghost" onClick={() => setIsNewTaskOpen(false)}>Cancel</Button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">Create Task</Button>
               </div>
             </form>
           </DialogContent>
