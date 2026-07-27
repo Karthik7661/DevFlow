@@ -3,13 +3,33 @@
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
-import { Bell, Search, Sun, Moon, Plus, Command } from 'lucide-react';
+import { Bell, Search, Sun, Moon, Plus, Command, User, Settings, LogOut } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function TopNav() {
   const { theme, toggleTheme } = useThemeStore();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { workspaces, activeWorkspaceId, setActiveWorkspace } = useWorkspaceStore();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   return (
     <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-40 shrink-0">
@@ -60,8 +80,38 @@ export function TopNav() {
           <Plus className="h-3.5 w-3.5" />
           <span>Create</span>
         </Button>
-        <div className="ml-2 h-8 w-8 rounded-full bg-accent border border-border flex items-center justify-center text-xs font-bold uppercase shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all">
-          {user?.email?.[0] || 'U'}
+        <div className="relative ml-2" ref={dropdownRef}>
+          <div 
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="h-8 w-8 rounded-full bg-accent border border-border flex items-center justify-center text-xs font-bold uppercase shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all select-none"
+          >
+            {user?.email?.[0] || 'U'}
+          </div>
+          
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-background/95 backdrop-blur-xl shadow-xl shadow-black/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+              <div className="px-4 py-3 border-b border-border bg-accent/20">
+                <p className="text-sm font-semibold truncate text-foreground">{user?.fullName || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
+              <div className="p-1">
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer transition-colors" onClick={() => { setIsProfileOpen(false); router.push('/dashboard/settings'); }}>
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>Profile Settings</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md cursor-pointer transition-colors" onClick={() => { setIsProfileOpen(false); router.push('/dashboard/settings'); }}>
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <span>Preferences</span>
+                </div>
+              </div>
+              <div className="p-1 border-t border-border">
+                <div onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 hover:text-red-600 rounded-md cursor-pointer transition-colors">
+                  <LogOut className="h-4 w-4" />
+                  <span>Log out</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
