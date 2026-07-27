@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  DEVELOPER
+}
+
+enum ReportType {
+  PROJECT
+  SPRINT
+  TEAM
+}
+
+enum WorkspaceRole {
+  ADMIN
+  MANAGER
+  DEVELOPER
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  REVIEW
+  TESTING
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id             String    @id
+  email          String    @unique
+  fullName       String
+  profilePicture String?
+  role           Role      @default(DEVELOPER)
+  createdAt      DateTime  @default(now())
+  lastLogin      DateTime?
+
+  workspacesOwned Workspace[] @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
+  tasksAssigned Task[] @relation("TaskAssignee")
+  tasksReported Task[] @relation("TaskReporter")
+  comments      Comment[]
+  reportsCreated Report[]
+  dashboardPreference DashboardPreference?
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  logo        String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     WorkspaceMember[]
+  projects    Project[]
+  labels      Label[]
+  reports     Report[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(DEVELOPER)
+  createdAt   DateTime      @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Project {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  status      ProjectStatus   @default(PLANNED)
+  priority    ProjectPriority @default(MEDIUM)
+  startDate   DateTime?
+  endDate     DateTime?
+  workspaceId String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sprints     Sprint[]
+  tasks       Task[]
+
+  @@index([workspaceId])
+}
+
+model Sprint {
+  id          String       @id @default(uuid())
+  name        String
+  goal        String?
+  startDate   DateTime?
+  endDate     DateTime?
+  projectId   String
+  status      SprintStatus @default(PLANNED)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId])
+}
+
+model Task {
+  id            String       @id @default(uuid())
+  title         String
+  description   String?      @db.Text
+  status        TaskStatus   @default(TODO)
+  priority      TaskPriority @default(MEDIUM)
+  projectId     String
+  sprintId      String?
+  assigneeId    String?
+  reporterId    String
+  dueDate       DateTime?
+  estimatedTime Float?
+  timeSpent     Float?       @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint      Sprint?    @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  reporter    User       @relation("TaskReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  subtasks    Subtask[]
+  comments    Comment[]
+  attachments Attachment[]
+  labels      TaskLabel[]
+
+  @@index([projectId])
+  @@index([sprintId])
+  @@index([assigneeId])
+  @@index([reporterId])
+}
+
+model Subtask {
+  id          String   @id @default(uuid())
+  title       String
+  isCompleted Boolean  @default(false)
+  taskId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Label {
+  id          String   @id @default(uuid())
+  name        String
+  color       String   @default("#000000")
+  workspaceId String
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       TaskLabel[]
+}
+
+model TaskLabel {
+  taskId  String
+  labelId String
+
+  task    Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileUrl   String
+  taskId    String
+  createdAt DateTime @default(now())
+
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String     @id @default(uuid())
+  name        String
+  type        ReportType
+  fileUrl     String?
+  workspaceId String
+  createdById String
+  createdAt   DateTime   @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model DashboardPreference {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  defaultDateRange String   @default("THIS_WEEK")
+  visibleWidgets   String   @default("ALL")
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
