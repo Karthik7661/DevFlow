@@ -92,7 +92,7 @@ export default function ProjectsPage() {
                   {project.status.replace('_', ' ').toLowerCase()}
                 </span>
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
-                  <div className={`h-2 w-2 rounded-full ${project.priority === 'CRITICAL' ? 'bg-red-500' : project.priority === 'HIGH' ? 'bg-orange-500' : project.priority === 'MEDIUM' ? 'bg-yellow-500' : 'bg-blue-500'}`} />
+                  <div className={`h-2 w-2 rounded-full ${project.priority === 'URGENT' || (project.priority as any) === 'CRITICAL' ? 'bg-red-500' : project.priority === 'HIGH' ? 'bg-orange-500' : project.priority === 'MEDIUM' ? 'bg-yellow-500' : 'bg-blue-500'}`} />
                   <span className="capitalize">{project.priority.toLowerCase()}</span>
                 </div>
               </div>
