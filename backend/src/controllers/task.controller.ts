@@ -114,3 +114,13 @@ export const addComment = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { taskId } = req.params;
+    await prisma.task.delete({ where: { id: taskId } });
+    res.status(200).json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

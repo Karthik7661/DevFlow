@@ -4,6 +4,7 @@ import { checkWorkspaceRole } from '../middleware/workspace.middleware';
 import { WorkspaceRole } from '@prisma/client';
 import projectRoutes from './project.routes';
 import analyticsRoutes from './analytics.routes';
+import messageRoutes from './message.routes';
 import { 
   createWorkspace, 
   getWorkspaces, 
@@ -34,5 +35,6 @@ router.delete('/:workspaceId/members/:memberId', checkWorkspaceRole([]), removeM
 // Mount nested routes
 router.use('/:workspaceId/projects', projectRoutes);
 router.use('/:workspaceId/analytics', analyticsRoutes);
+router.use('/:workspaceId/messages', messageRoutes);
 
 export default router;

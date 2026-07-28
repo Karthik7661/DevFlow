@@ -52,6 +52,9 @@ interface WorkspaceState {
   setActiveWorkspace: (id: string) => Promise<void>;
   createWorkspace: (data: { name: string; description?: string }) => Promise<void>;
   createProject: (data: any) => Promise<void>;
+  inviteMember: (email: string, role?: string) => Promise<void>;
+  updateMemberRole: (memberId: string, role: string) => Promise<void>;
+  removeMember: (memberId: string) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -115,6 +118,54 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       await get().setActiveWorkspace(activeWorkspaceId); // Refresh details
     } catch (error) {
       console.error('Failed to create project', error);
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  inviteMember: async (email, role) => {
+    const activeWorkspaceId = get().activeWorkspaceId;
+    if (!activeWorkspaceId) return;
+    
+    set({ loading: true });
+    try {
+      await api.post(`/workspaces/${activeWorkspaceId}/members`, { email, role });
+      await get().setActiveWorkspace(activeWorkspaceId); // Refresh details
+    } catch (error) {
+      console.error('Failed to invite member', error);
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  updateMemberRole: async (memberId, role) => {
+    const activeWorkspaceId = get().activeWorkspaceId;
+    if (!activeWorkspaceId) return;
+    
+    set({ loading: true });
+    try {
+      await api.put(`/workspaces/${activeWorkspaceId}/members/${memberId}`, { role });
+      await get().setActiveWorkspace(activeWorkspaceId); // Refresh details
+    } catch (error) {
+      console.error('Failed to update member role', error);
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  removeMember: async (memberId) => {
+    const activeWorkspaceId = get().activeWorkspaceId;
+    if (!activeWorkspaceId) return;
+    
+    set({ loading: true });
+    try {
+      await api.delete(`/workspaces/${activeWorkspaceId}/members/${memberId}`);
+      await get().setActiveWorkspace(activeWorkspaceId); // Refresh details
+    } catch (error) {
+      console.error('Failed to remove member', error);
       throw error;
     } finally {
       set({ loading: false });
