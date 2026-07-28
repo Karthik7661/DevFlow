@@ -37,7 +37,7 @@ app.get('/health', (req, res) => {
 
 initSocket(httpServer);
 
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL) {
   httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
