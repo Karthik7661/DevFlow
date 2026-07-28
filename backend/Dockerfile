@@ -2,9 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies including devDependencies (needed for build)
 COPY package*.json ./
-RUN npm install
+RUN npm install --include=dev
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma
