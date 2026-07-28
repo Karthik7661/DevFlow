@@ -36,8 +36,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await api.get('/auth/me');
       set({ profile: response.data });
-    } catch (error) {
-      console.error('Failed to fetch profile:', error);
+    } catch (error: any) {
+      if (error.response?.status !== 401) {
+        console.error('Failed to fetch profile:', error);
+      }
       set({ profile: null });
     }
   },

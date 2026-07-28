@@ -1,18 +1,27 @@
 'use client'
 
 import { useWorkspaceStore } from '@/store/workspaceStore';
+import { useAnalyticsStore } from '@/store/analyticsStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Users, FolderKanban, Activity, Box, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import toast from 'react-hot-toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const { workspaces, activeWorkspaceDetails, loading, createWorkspace } = useWorkspaceStore();
+  const { summary, fetchSummary } = useAnalyticsStore();
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (activeWorkspaceDetails?.id) {
+      fetchSummary(activeWorkspaceDetails.id);
+    }
+  }, [activeWorkspaceDetails?.id, fetchSummary]);
 
   const handleCreateFirstWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +38,18 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+      <div className="p-8 space-y-8 animate-in fade-in duration-500">
+        <div>
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1,2,3,4].map(i => <Skeleton key={i} className="h-28 w-full" />)}
+        </div>
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+          <Skeleton className="h-[350px] w-full" />
+          <Skeleton className="h-[350px] w-full lg:col-span-2" />
+        </div>
       </div>
     );
   }
@@ -61,27 +80,6 @@ export default function DashboardPage() {
     )
   }
 
-  const projectStats = activeWorkspaceDetails.projects.reduce((acc: any, project) => {
-    acc[project.status] = (acc[project.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  const chartData = [
-    { name: 'Planned', count: projectStats.PLANNED || 0 },
-    { name: 'In Progress', count: projectStats.IN_PROGRESS || 0 },
-    { name: 'Completed', count: projectStats.COMPLETED || 0 },
-  ];
-
-  const burndownData = [
-    { day: 'Day 1', ideal: 100, actual: 100 },
-    { day: 'Day 2', ideal: 90, actual: 95 },
-    { day: 'Day 3', ideal: 80, actual: 85 },
-    { day: 'Day 4', ideal: 70, actual: 60 },
-    { day: 'Day 5', ideal: 60, actual: 55 },
-    { day: 'Day 6', ideal: 50, actual: 45 },
-    { day: 'Day 7', ideal: 40, actual: 30 },
-  ];
-
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div>
@@ -98,7 +96,7 @@ export default function DashboardPage() {
             <FolderKanban className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeWorkspaceDetails.projects.length}</div>
+            <div className="text-2xl font-bold">{summary?.totalProjects || 0}</div>
           </CardContent>
         </Card>
         
@@ -114,21 +112,21 @@ export default function DashboardPage() {
 
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectStats.IN_PROGRESS || 0}</div>
+            <div className="text-2xl font-bold text-orange-500">{summary?.pendingTasks || 0}</div>
           </CardContent>
         </Card>
 
-        <Card className="glass">
+        <Card className="glass border-primary/30 bg-primary/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <Box className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-primary">Completed Tasks</CardTitle>
+            <Box className="h-4 w-4 text-primary/70" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectStats.COMPLETED || 0}</div>
+            <div className="text-2xl font-bold text-primary">{summary?.completedTasks || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -139,14 +137,18 @@ export default function DashboardPage() {
             <CardTitle>Project Status Distribution</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} allowDecimals={false} />
-                <Tooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#ffffff" radius={[4, 4, 0, 0]} maxBarSize={60} />
-              </BarChart>
-            </ResponsiveContainer>
+            {summary?.chartData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={summary.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} allowDecimals={false} />
+                  <Tooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }} />
+                  <Bar dataKey="count" fill="#ffffff" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">No data available</div>
+            )}
           </CardContent>
         </Card>
 
@@ -158,16 +160,23 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                <XAxis dataKey="day" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }} />
-                <Line type="monotone" dataKey="ideal" stroke="#888888" strokeWidth={2} strokeDasharray="5 5" name="Ideal Tasks" />
-                <Line type="monotone" dataKey="actual" stroke="#ffffff" strokeWidth={3} name="Remaining Tasks" />
-              </LineChart>
-            </ResponsiveContainer>
+            {summary?.burndownData && summary.burndownData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={summary.burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                  <XAxis dataKey="day" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="ideal" stroke="#888888" strokeWidth={2} strokeDasharray="5 5" name="Ideal Tasks" />
+                  <Line type="monotone" dataKey="actual" stroke="#ffffff" strokeWidth={3} name="Remaining Tasks" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center flex-col text-muted-foreground text-sm">
+                <Box className="h-8 w-8 mb-2 opacity-20" />
+                No active sprints to track
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

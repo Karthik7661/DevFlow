@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/Dialog';
-import { UserPlus, MoreVertical, Trash2, Shield, User } from 'lucide-react';
+import { UserPlus, MoreVertical, Trash2, Shield, User, Activity, CheckCircle2, Clock } from 'lucide-react';
 
 export default function TeamPage() {
   const { activeWorkspaceDetails, inviteMember, updateMemberRole, removeMember } = useWorkspaceStore();
@@ -62,22 +62,22 @@ export default function TeamPage() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center bg-background/50 backdrop-blur-md p-6 rounded-xl border border-border">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Team Members</h2>
-          <p className="text-muted-foreground">Manage your team members and their roles for this workspace.</p>
+          <p className="text-muted-foreground mt-1 text-sm">Manage your team members and their roles for this workspace.</p>
         </div>
         
         {isAdminOrManager && (
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <UserPlus className="h-4 w-4" />
+              <Button className="shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
+                <UserPlus className="h-4 w-4 mr-2" />
                 Invite Member
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="glass">
               <DialogHeader>
                 <DialogTitle>Invite Team Member</DialogTitle>
               </DialogHeader>
@@ -95,7 +95,7 @@ export default function TeamPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
                   <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                   >
@@ -106,7 +106,7 @@ export default function TeamPage() {
                 </div>
                 {inviteError && <p className="text-sm text-red-500">{inviteError}</p>}
                 <div className="flex justify-end gap-2 mt-6">
-                  <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="ghost" onClick={() => setIsInviteOpen(false)}>Cancel</Button>
                   <Button type="submit" disabled={inviteLoading}>
                     {inviteLoading ? 'Inviting...' : 'Send Invite'}
                   </Button>
@@ -117,57 +117,89 @@ export default function TeamPage() {
         )}
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {members.map((member) => (
-          <Card key={member.id} className="overflow-hidden">
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+          <Card key={member.id} className="overflow-hidden glass hover:bg-accent/20 transition-all duration-300 border-border/50 hover:border-primary/30 flex flex-col group">
+            <div className="p-6 flex flex-col flex-1 relative">
+              
+              {/* Top right actions */}
+              {isAdminOrManager && member.userId !== user?.uid && (
+                <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                    onClick={() => handleRemove(member.userId)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex items-start gap-4 mb-6">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0">
                   {member.user.fullName.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-medium flex items-center gap-2">
+                <div className="flex-1 min-w-0 pr-8">
+                  <p className="font-semibold text-lg flex items-center gap-2 truncate">
                     {member.user.fullName}
                     {member.userId === user?.uid && (
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">You</span>
+                      <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">You</span>
                     )}
                   </p>
-                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                  <p className="text-sm text-muted-foreground truncate">{member.user.email}</p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-md">
-                  {member.role === 'ADMIN' && <Shield className="h-3.5 w-3.5 text-purple-500" />}
-                  {member.role === 'MANAGER' && <Shield className="h-3.5 w-3.5 text-blue-500" />}
-                  {member.role === 'DEVELOPER' && <User className="h-3.5 w-3.5" />}
-                  <span className="font-medium capitalize">{member.role.toLowerCase()}</span>
-                </div>
 
-                {isAdminOrManager && member.userId !== user?.uid && (
-                  <div className="flex items-center gap-2">
-                    {currentMember?.role === 'ADMIN' && (
-                      <select 
-                        className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                        value={member.role}
-                        onChange={(e) => handleRoleChange(member.userId, e.target.value)}
-                      >
-                        <option value="DEVELOPER">Developer</option>
-                        <option value="MANAGER">Manager</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
-                      onClick={() => handleRemove(member.userId)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+              {/* Role Selection */}
+              <div className="mb-6">
+                {currentMember?.role === 'ADMIN' && member.userId !== user?.uid ? (
+                  <select 
+                    className={`h-8 rounded-md border text-xs font-semibold px-2 py-1 uppercase tracking-wider w-full ${member.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : member.role === 'MANAGER' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-muted text-muted-foreground border-border'}`}
+                    value={member.role}
+                    onChange={(e) => handleRoleChange(member.userId, e.target.value)}
+                  >
+                    <option value="DEVELOPER">Developer</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                ) : (
+                  <div className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-md border ${member.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : member.role === 'MANAGER' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                    {member.role === 'ADMIN' && <Shield className="h-3 w-3" />}
+                    {member.role === 'MANAGER' && <Shield className="h-3 w-3" />}
+                    {member.role === 'DEVELOPER' && <User className="h-3 w-3" />}
+                    <span>{member.role}</span>
                   </div>
                 )}
               </div>
+              
+              {/* Metrics */}
+              <div className="mt-auto grid grid-cols-3 gap-2 bg-background/50 rounded-lg p-3 border border-border">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-500/10 text-blue-500 mb-1">
+                    <Activity className="h-4 w-4" />
+                  </div>
+                  <span className="text-xl font-bold">{member.metrics?.totalTasks || 0}</span>
+                  <span className="text-[10px] uppercase font-semibold text-muted-foreground">Assigned</span>
+                </div>
+                
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-500/10 text-green-500 mb-1">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                  <span className="text-xl font-bold">{member.metrics?.completedTasks || 0}</span>
+                  <span className="text-[10px] uppercase font-semibold text-muted-foreground">Done</span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-orange-500/10 text-orange-500 mb-1">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span className="text-xl font-bold">{member.metrics?.inProgressTasks || 0}</span>
+                  <span className="text-[10px] uppercase font-semibold text-muted-foreground">Active</span>
+                </div>
+              </div>
+
             </div>
           </Card>
         ))}

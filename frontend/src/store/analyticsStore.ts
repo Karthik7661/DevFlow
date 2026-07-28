@@ -8,6 +8,8 @@ interface DashboardSummary {
   completedTasks: number;
   pendingTasks: number;
   highPriorityTasks: number;
+  chartData: { name: string; count: number }[];
+  burndownData: { day: string; ideal: number; actual: number | null }[];
 }
 
 interface TeamProductivity {

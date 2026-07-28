@@ -1,1 +1,0 @@
-{"version":3,"file":"workspace.middleware.d.ts","sourceRoot":"","sources":["workspace.middleware.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AACjD,OAAO,EAAgB,aAAa,EAAE,MAAM,gBAAgB,CAAC;AAC7D,OAAO,EAAE,oBAAoB,EAAE,MAAM,mBAAmB,CAAC;AAIzD,eAAO,MAAM,kBAAkB,iBAAkB,aAAa,EAAE,WAC3C,oBAAoB,OAAO,QAAQ,QAAQ,YAAY,KAAG,OAAO,CAAC,IAAI,CAmC1F,CAAC"}

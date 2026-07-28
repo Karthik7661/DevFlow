@@ -33,16 +33,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden ambient-bg bg-grid-white relative">
+    <div className="fixed inset-0 flex bg-background overflow-hidden ambient-bg bg-grid-white">
       <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
-      <div className="z-20 flex h-full w-full">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 bg-background/95">
-          <TopNav />
-          <main className="flex-1 overflow-y-auto p-4 md:p-8">
-            {children}
-          </main>
-        </div>
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0 bg-background/95 z-20 relative">
+        <TopNav />
+        <main className="flex-1 min-h-0 overflow-hidden p-4 md:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

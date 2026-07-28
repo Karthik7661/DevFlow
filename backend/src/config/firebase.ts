@@ -4,7 +4,8 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 let auth: Auth;
 
 try {
-  if (!getApps().length) {
+  const apps = typeof getApps === 'function' ? getApps() : [];
+  if (!apps.length) {
     if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       console.log("Firebase credentials found. Initializing...");
       let pk = process.env.FIREBASE_PRIVATE_KEY;
@@ -22,7 +23,7 @@ try {
     } else {
       console.log("Firebase vars missing. Falling back to default...");
       initializeApp({
-        credential: applicationDefault(),
+        projectId: process.env.FIREBASE_PROJECT_ID || 'devflow-ca713',
       });
     }
   }

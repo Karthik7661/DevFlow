@@ -38,7 +38,7 @@ export function Sidebar() {
         { name: 'Projects', href: '/dashboard/projects', icon: FolderKanban },
         { name: 'Sprint Board', href: '/dashboard/sprint', icon: Layout },
         { name: 'Team Chat', href: '/dashboard/chat', icon: MessageSquare },
-        { name: 'Documents', href: '/dashboard/documents', icon: FileText },
+        { name: 'Files', href: '/dashboard/files', icon: FileText },
       ]
     },
     {
@@ -58,10 +58,11 @@ export function Sidebar() {
   ];
 
   return (
-    <motion.div 
-      initial={{ width: 240 }}
-      animate={{ width: collapsed ? 68 : 240 }}
-      className="h-screen flex flex-col border-r border-border bg-background/50 backdrop-blur-xl shrink-0 relative z-50 group"
+    <div 
+      className={cn(
+        "h-full flex flex-col border-r border-border bg-background/95 shrink-0 relative z-30 group transition-all duration-300 ease-in-out",
+        collapsed ? "w-[68px]" : "w-[240px]"
+      )}
     >
       <button 
         onClick={() => setCollapsed(!collapsed)}
@@ -69,22 +70,17 @@ export function Sidebar() {
       >
         {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </button>
-
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-6 mt-2 scrollbar-hide">
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-6 mt-2">
         {navGroups.map((group, idx) => (
           <div key={idx}>
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2"
-                >
-                  {group.label}
-                </motion.div>
+            <div
+              className={cn(
+                "px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2",
+                collapsed ? "hidden" : "block"
               )}
-            </AnimatePresence>
+            >
+              {group.label}
+            </div>
             <div className="space-y-0.5">
               {group.items.map((item) => {
                 const isActive = pathname === item.href;
@@ -102,24 +98,19 @@ export function Sidebar() {
                     )}
                   >
                     {isActive && (
-                      <motion.div 
-                        layoutId="active-indicator"
+                      <div 
                         className="absolute left-0 top-1 bottom-1 w-1 bg-primary rounded-r-full"
                       />
                     )}
                     <item.icon className={cn("shrink-0", collapsed ? "h-5 w-5" : "h-4 w-4")} />
-                    <AnimatePresence>
-                      {!collapsed && (
-                        <motion.span
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 'auto' }}
-                          exit={{ opacity: 0, width: 0 }}
-                          className="text-sm whitespace-nowrap overflow-hidden"
-                        >
-                          {item.name}
-                        </motion.span>
+                    <span
+                      className={cn(
+                        "text-sm whitespace-nowrap",
+                        collapsed ? "hidden" : "block"
                       )}
-                    </AnimatePresence>
+                    >
+                      {item.name}
+                    </span>
                   </Link>
                 )
               })}
@@ -127,6 +118,6 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-    </motion.div>
+    </div>
   );
 }

@@ -80,6 +80,8 @@ model User {
   reportsCreated Report[]
   dashboardPreference DashboardPreference?
   sentMessages  Message[]
+  notifications Notification[]
+  uploadedFiles WorkspaceFile[]
 }
 
 model Workspace {
@@ -97,6 +99,7 @@ model Workspace {
   labels      Label[]
   reports     Report[]
   messages    Message[]
+  files       WorkspaceFile[]
 }
 
 model WorkspaceMember {
@@ -273,3 +276,36 @@ model Message {
   @@index([workspaceId])
   @@index([senderId])
 }
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String   @db.Text
+  read        Boolean  @default(false)
+  userId      String
+  link        String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WorkspaceFile {
+  id          String   @id @default(uuid())
+  fileName    String
+  originalName String
+  mimeType    String
+  size        Int
+  fileUrl     String
+  workspaceId String
+  uploadedById String
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploadedBy  User      @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([uploadedById])
+}
+

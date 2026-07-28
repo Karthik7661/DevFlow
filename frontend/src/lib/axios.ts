@@ -2,7 +2,10 @@ import axios from 'axios';
 import { auth } from './firebase';
 
 const api = axios.create({
-  baseURL: 'https://devflow-production-76a1.up.railway.app/api',
+  baseURL: 'https://backend-six-gamma-28.vercel.app/api',
+  headers: {
+    'Bypass-Tunnel-Reminder': 'true'
+  }
 });
 
 api.interceptors.request.use(async (config) => {
