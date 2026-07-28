@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Send, Hash, Plus, MessageSquare, User } from 'lucide-react';
+import { Send, Hash, Plus, User } from 'lucide-react';
 
 interface ChannelItem {
   id: string;
@@ -16,7 +16,7 @@ interface ChannelItem {
 
 export default function ChatPage() {
   const { messages, loading, fetchMessages, sendMessage } = useChatStore();
-  const { activeWorkspaceId } = useWorkspaceStore();
+  const { activeWorkspaceId, activeWorkspaceDetails } = useWorkspaceStore();
   const { user } = useAuthStore();
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
@@ -30,14 +30,10 @@ export default function ChatPage() {
     ],
     'random': [
       { id: '1', content: 'Welcome to #random! Share memes, food photos, or off-topic chat.', senderName: 'DevFlow Bot', isMe: false, time: '09:30 AM' }
-    ],
-    'alex-smith': [
-      { id: '1', content: 'Hey! Did you check the latest sprint update?', senderName: 'Alex Smith', isMe: false, time: '02:15 PM' }
     ]
   });
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const isInitialLoadRef = useRef(true);
 
   const channels: ChannelItem[] = [
     { id: 'team-chat', name: 'team-chat', type: 'channel' },
@@ -45,8 +41,15 @@ export default function ChatPage() {
     { id: 'random', name: 'random', type: 'channel' },
   ];
 
-  const directMessages: ChannelItem[] = [
-    { id: 'alex-smith', name: 'Alex Smith', type: 'dm' },
+  // Dynamically load real workspace members under Direct Messages
+  const realMembers = (activeWorkspaceDetails?.members || []).map(member => ({
+    id: `dm-${member.userId}`,
+    name: member.user?.fullName || member.user?.email || 'Team Member',
+    type: 'dm' as const
+  }));
+
+  const directMessages: ChannelItem[] = realMembers.length > 0 ? realMembers : [
+    { id: 'dm-sample', name: 'Team Member', type: 'dm' }
   ];
 
   const currentChannel = [...channels, ...directMessages].find(c => c.id === activeChannelId) || channels[0];
@@ -76,7 +79,6 @@ export default function ChatPage() {
       if (activeChannelId === 'team-chat') {
         await sendMessage(content);
       } else {
-        // Handle sending to local channel/DM
         const newMsg = {
           id: Date.now().toString(),
           content: content.trim(),
@@ -210,8 +212,8 @@ export default function ChatPage() {
           ) : (
             (channelMessages[activeChannelId] || []).length === 0 ? (
               <div className="text-center text-muted-foreground py-10">
-                <Hash className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>No messages yet in #{currentChannel.name}.</p>
+                <User className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>Start a conversation with {currentChannel.name}.</p>
               </div>
             ) : (
               channelMessages[activeChannelId].map((msg) => (
@@ -239,7 +241,7 @@ export default function ChatPage() {
             <Input 
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={`Message #${currentChannel.name}...`} 
+              placeholder={currentChannel.type === 'channel' ? `Message #${currentChannel.name}...` : `Message @${currentChannel.name}...`} 
               className="flex-1 bg-muted/50 border-0 focus-visible:ring-1"
               disabled={sending}
             />
@@ -252,5 +254,6 @@ export default function ChatPage() {
     </div>
   );
 }
+
 
 
