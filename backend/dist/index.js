@@ -14,6 +14,7 @@ const task_routes_1 = __importDefault(require("./routes/task.routes"));
 const socket_1 = require("./socket");
 const file_routes_1 = __importDefault(require("./routes/file.routes"));
 const path_1 = __importDefault(require("path"));
+const notification_routes_1 = __importDefault(require("./routes/notification.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
@@ -26,7 +27,7 @@ app.use('/api/auth', auth_routes_1.default);
 app.use('/api/workspaces', workspace_routes_1.default);
 app.use('/api/projects/:projectId/sprints', sprint_routes_1.default);
 app.use('/api/projects/:projectId/tasks', task_routes_1.default);
-app.use('/api/notifications', require('./routes/notification.routes').default);
+app.use('/api/notifications', notification_routes_1.default);
 app.use('/api/workspaces/:workspaceId/files', file_routes_1.default);
 // Health check
 app.get('/health', (req, res) => {

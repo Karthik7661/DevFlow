@@ -11,6 +11,8 @@ import { initSocket } from './socket';
 import fileRoutes from './routes/file.routes';
 import path from 'path';
 
+import notificationRoutes from './routes/notification.routes';
+
 dotenv.config();
 
 const app = express();
@@ -27,7 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/projects/:projectId/sprints', sprintRoutes);
 app.use('/api/projects/:projectId/tasks', taskRoutes);
-app.use('/api/notifications', require('./routes/notification.routes').default);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/workspaces/:workspaceId/files', fileRoutes);
 
 // Health check
