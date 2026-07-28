@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const createTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { projectId } = req.params;
+    const projectId = req.params.projectId as string;
     const uid = req.user?.uid;
     const { title, description, status, priority, sprintId, assigneeId, dueDate, estimatedTime } = req.body;
 
@@ -40,7 +40,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
 
 export const getTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { projectId } = req.params;
+    const projectId = req.params.projectId as string;
     const { sprintId, status, assigneeId } = req.query;
 
     const tasks = await prisma.task.findMany({
@@ -64,7 +64,7 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response): Promis
 
 export const updateTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { taskId } = req.params;
+    const taskId = req.params.taskId as string;
     const { title, description, status, priority, sprintId, assigneeId, dueDate, estimatedTime, timeSpent } = req.body;
 
     const task = await prisma.task.update({
@@ -93,7 +93,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
 
 export const addComment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { taskId } = req.params;
+    const taskId = req.params.taskId as string;
     const uid = req.user?.uid;
     const { content } = req.body;
 
@@ -117,7 +117,7 @@ export const addComment = async (req: AuthenticatedRequest, res: Response): Prom
 
 export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { taskId } = req.params;
+    const taskId = req.params.taskId as string;
     await prisma.task.delete({ where: { id: taskId } });
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {

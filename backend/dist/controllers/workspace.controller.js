@@ -66,7 +66,7 @@ const getWorkspaces = async (req, res) => {
 exports.getWorkspaces = getWorkspaces;
 const getWorkspaceDetails = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const workspace = await prisma.workspace.findUnique({
             where: { id: workspaceId },
             include: {
@@ -82,16 +82,48 @@ const getWorkspaceDetails = async (req, res) => {
             res.status(404).json({ message: 'Not found' });
             return;
         }
-        res.status(200).json(workspace);
+        // Aggregate metrics for each member in the workspace
+        // Find all tasks in this workspace
+        const workspaceTasks = await prisma.task.findMany({
+            where: {
+                project: {
+                    workspaceId: workspaceId
+                }
+            },
+            select: {
+                assigneeId: true,
+                status: true
+            }
+        });
+        // Calculate metrics
+        const enhancedMembers = workspace.members.map(member => {
+            const memberTasks = workspaceTasks.filter(t => t.assigneeId === member.userId);
+            const completedTasks = memberTasks.filter(t => t.status === 'DONE').length;
+            const inProgressTasks = memberTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'REVIEW' || t.status === 'TESTING').length;
+            return {
+                ...member,
+                metrics: {
+                    totalTasks: memberTasks.length,
+                    completedTasks,
+                    inProgressTasks
+                }
+            };
+        });
+        const enhancedWorkspace = {
+            ...workspace,
+            members: enhancedMembers
+        };
+        res.status(200).json(enhancedWorkspace);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
 exports.getWorkspaceDetails = getWorkspaceDetails;
 const updateWorkspace = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const { name, description, logo } = req.body;
         const workspace = await prisma.workspace.update({
             where: { id: workspaceId },
@@ -106,7 +138,7 @@ const updateWorkspace = async (req, res) => {
 exports.updateWorkspace = updateWorkspace;
 const deleteWorkspace = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const uid = req.user?.uid;
         const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
         if (!workspace) {
@@ -127,7 +159,7 @@ const deleteWorkspace = async (req, res) => {
 exports.deleteWorkspace = deleteWorkspace;
 const inviteMember = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const { email, role } = req.body;
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
@@ -157,7 +189,8 @@ const inviteMember = async (req, res) => {
 exports.inviteMember = inviteMember;
 const updateMemberRole = async (req, res) => {
     try {
-        const { workspaceId, memberId } = req.params;
+        const workspaceId = req.params.workspaceId;
+        const memberId = req.params.memberId;
         const { role } = req.body;
         const updated = await prisma.workspaceMember.update({
             where: {
@@ -177,7 +210,8 @@ const updateMemberRole = async (req, res) => {
 exports.updateMemberRole = updateMemberRole;
 const removeMember = async (req, res) => {
     try {
-        const { workspaceId, memberId } = req.params;
+        const workspaceId = req.params.workspaceId;
+        const memberId = req.params.memberId;
         const uid = req.user?.uid;
         // Check if user is removing themselves, or if they are an admin
         if (memberId !== uid) {

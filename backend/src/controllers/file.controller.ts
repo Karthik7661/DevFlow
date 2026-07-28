@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export const uploadFile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const uid = req.user?.uid;
     const file = req.file;
 
@@ -43,7 +43,7 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response): Prom
 
 export const getFiles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const uid = req.user?.uid;
 
     if (!uid) { res.status(401).json({ message: 'Unauthorized' }); return; }
@@ -67,7 +67,8 @@ export const getFiles = async (req: AuthenticatedRequest, res: Response): Promis
 
 export const deleteFile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId, fileId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
+    const fileId = req.params.fileId as string;
     const uid = req.user?.uid;
 
     if (!uid) { res.status(401).json({ message: 'Unauthorized' }); return; }

@@ -9,6 +9,7 @@ const workspace_middleware_1 = require("../middleware/workspace.middleware");
 const client_1 = require("@prisma/client");
 const project_routes_1 = __importDefault(require("./project.routes"));
 const analytics_routes_1 = __importDefault(require("./analytics.routes"));
+const message_routes_1 = __importDefault(require("./message.routes"));
 const workspace_controller_1 = require("../controllers/workspace.controller");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.verifyToken);
@@ -24,5 +25,6 @@ router.delete('/:workspaceId/members/:memberId', (0, workspace_middleware_1.chec
 // Mount nested routes
 router.use('/:workspaceId/projects', project_routes_1.default);
 router.use('/:workspaceId/analytics', analytics_routes_1.default);
+router.use('/:workspaceId/messages', message_routes_1.default);
 exports.default = router;
 //# sourceMappingURL=workspace.routes.js.map

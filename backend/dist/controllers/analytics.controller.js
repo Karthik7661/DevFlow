@@ -6,23 +6,61 @@ const json2csv_1 = require("json2csv");
 const prisma = new client_1.PrismaClient();
 const getDashboardSummary = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
-        const [totalProjects, activeSprints, allTasks] = await Promise.all([
-            prisma.project.count({ where: { workspaceId } }),
-            prisma.sprint.count({ where: { project: { workspaceId }, status: 'ACTIVE' } }),
+        const workspaceId = req.params.workspaceId;
+        const [projects, activeSprintsData, allTasks] = await Promise.all([
+            prisma.project.findMany({ where: { workspaceId }, select: { status: true } }),
+            prisma.sprint.findMany({
+                where: { project: { workspaceId }, status: 'ACTIVE' },
+                include: { tasks: true }
+            }),
             prisma.task.findMany({ where: { project: { workspaceId } }, select: { status: true, priority: true } })
         ]);
+        const totalProjects = projects.length;
+        const activeSprints = activeSprintsData.length;
         const totalTasks = allTasks.length;
         const completedTasks = allTasks.filter(t => t.status === 'DONE').length;
         const pendingTasks = totalTasks - completedTasks;
         const highPriorityTasks = allTasks.filter(t => ['HIGH', 'CRITICAL'].includes(t.priority)).length;
+        // Project Status Distribution
+        const projectStats = projects.reduce((acc, p) => {
+            acc[p.status] = (acc[p.status] || 0) + 1;
+            return acc;
+        }, {});
+        const chartData = [
+            { name: 'Planned', count: projectStats['PLANNED'] || 0 },
+            { name: 'In Progress', count: projectStats['IN_PROGRESS'] || 0 },
+            { name: 'Completed', count: projectStats['COMPLETED'] || 0 },
+            { name: 'Archived', count: projectStats['ARCHIVED'] || 0 },
+        ];
+        // Simple Burndown Data Approximation (based on active sprints)
+        // In a real burndown, you'd track task completion dates. Here we just return an empty array if no sprint, 
+        // or a calculated array if there is one.
+        let burndownData = [];
+        if (activeSprintsData.length > 0) {
+            const sprint = activeSprintsData[0];
+            const sprintTasks = sprint.tasks.length;
+            const completed = sprint.tasks.filter(t => t.status === 'DONE').length;
+            // We'll generate a 7-day linear burndown for the active sprint for demonstration of real data structure
+            // Real implementation requires historical daily snapshots of completed tasks
+            const days = 7;
+            const idealVelocity = sprintTasks / days;
+            for (let i = 0; i < days; i++) {
+                burndownData.push({
+                    day: `Day ${i + 1}`,
+                    ideal: Math.round(sprintTasks - (idealVelocity * i)),
+                    actual: i === 0 ? sprintTasks : (i === days - 1 ? (sprintTasks - completed) : null) // Only plot start and end for now
+                });
+            }
+        }
         res.status(200).json({
             totalProjects,
             activeSprints,
             totalTasks,
             completedTasks,
             pendingTasks,
-            highPriorityTasks
+            highPriorityTasks,
+            chartData,
+            burndownData
         });
     }
     catch (error) {
@@ -32,7 +70,7 @@ const getDashboardSummary = async (req, res) => {
 exports.getDashboardSummary = getDashboardSummary;
 const getTeamProductivity = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const completedTasks = await prisma.task.findMany({
             where: { project: { workspaceId }, status: 'DONE' },
             include: { assignee: true }
@@ -57,7 +95,7 @@ const getTeamProductivity = async (req, res) => {
 exports.getTeamProductivity = getTeamProductivity;
 const exportReport = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const { type, projectId, sprintId } = req.query;
         let tasks = [];
         if (type === 'PROJECT' && projectId) {

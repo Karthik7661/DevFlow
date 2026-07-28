@@ -5,7 +5,8 @@ const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
 let auth;
 try {
-    if (!(0, app_1.getApps)().length) {
+    const apps = typeof app_1.getApps === 'function' ? (0, app_1.getApps)() : [];
+    if (!apps.length) {
         if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
             console.log("Firebase credentials found. Initializing...");
             let pk = process.env.FIREBASE_PRIVATE_KEY;
@@ -25,7 +26,7 @@ try {
         else {
             console.log("Firebase vars missing. Falling back to default...");
             (0, app_1.initializeApp)({
-                credential: (0, app_1.applicationDefault)(),
+                projectId: process.env.FIREBASE_PROJECT_ID || 'devflow-ca713',
             });
         }
     }

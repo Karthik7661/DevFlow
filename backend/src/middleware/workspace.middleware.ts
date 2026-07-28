@@ -18,7 +18,7 @@ export const checkWorkspaceRole = (allowedRoles: WorkspaceRole[]) => {
       const membership = await prisma.workspaceMember.findUnique({
         where: {
           workspaceId_userId: {
-            workspaceId,
+            workspaceId: workspaceId as string,
             userId: uid,
           },
         },

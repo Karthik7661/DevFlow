@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createTask = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const uid = req.user?.uid;
         const { title, description, status, priority, sprintId, assigneeId, dueDate, estimatedTime } = req.body;
         if (!uid) {
@@ -41,7 +41,7 @@ const createTask = async (req, res) => {
 exports.createTask = createTask;
 const getTasks = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const { sprintId, status, assigneeId } = req.query;
         const tasks = await prisma.task.findMany({
             where: {
@@ -65,7 +65,7 @@ const getTasks = async (req, res) => {
 exports.getTasks = getTasks;
 const updateTask = async (req, res) => {
     try {
-        const { taskId } = req.params;
+        const taskId = req.params.taskId;
         const { title, description, status, priority, sprintId, assigneeId, dueDate, estimatedTime, timeSpent } = req.body;
         const task = await prisma.task.update({
             where: { id: taskId },
@@ -94,7 +94,7 @@ const updateTask = async (req, res) => {
 exports.updateTask = updateTask;
 const addComment = async (req, res) => {
     try {
-        const { taskId } = req.params;
+        const taskId = req.params.taskId;
         const uid = req.user?.uid;
         const { content } = req.body;
         if (!uid) {
@@ -120,7 +120,7 @@ const addComment = async (req, res) => {
 exports.addComment = addComment;
 const deleteTask = async (req, res) => {
     try {
-        const { taskId } = req.params;
+        const taskId = req.params.taskId;
         await prisma.task.delete({ where: { id: taskId } });
         res.status(200).json({ message: 'Task deleted successfully' });
     }

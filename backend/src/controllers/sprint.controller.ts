@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const createSprint = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { projectId } = req.params;
+    const projectId = req.params.projectId as string;
     const { name, goal, startDate, endDate } = req.body;
 
     const sprint = await prisma.sprint.create({
@@ -26,7 +26,7 @@ export const createSprint = async (req: AuthenticatedRequest, res: Response): Pr
 
 export const getSprints = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { projectId } = req.params;
+    const projectId = req.params.projectId as string;
     const sprints = await prisma.sprint.findMany({
       where: { projectId },
       include: { tasks: true }
@@ -39,7 +39,7 @@ export const getSprints = async (req: AuthenticatedRequest, res: Response): Prom
 
 export const updateSprint = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { sprintId } = req.params;
+    const sprintId = req.params.sprintId as string;
     const { name, goal, startDate, endDate, status } = req.body;
 
     const sprint = await prisma.sprint.update({
@@ -60,7 +60,7 @@ export const updateSprint = async (req: AuthenticatedRequest, res: Response): Pr
 
 export const deleteSprint = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { sprintId } = req.params;
+    const sprintId = req.params.sprintId as string;
     await prisma.sprint.delete({ where: { id: sprintId } });
     res.status(204).send();
   } catch (error) {

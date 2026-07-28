@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export const getDashboardSummary = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
 
     const [projects, activeSprintsData, allTasks] = await Promise.all([
       prisma.project.findMany({ where: { workspaceId }, select: { status: true } }),
@@ -78,14 +78,14 @@ export const getDashboardSummary = async (req: AuthenticatedRequest, res: Respon
 
 export const getTeamProductivity = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
 
     const completedTasks = await prisma.task.findMany({
       where: { project: { workspaceId }, status: 'DONE' },
       include: { assignee: true }
     });
 
-    const productivityByUser = completedTasks.reduce((acc: any, task) => {
+    const productivityByUser = completedTasks.reduce((acc: any, task: any) => {
       if (task.assignee) {
         const uid = task.assignee.id;
         if (!acc[uid]) {
@@ -106,7 +106,7 @@ export const getTeamProductivity = async (req: AuthenticatedRequest, res: Respon
 
 export const exportReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const { type, projectId, sprintId } = req.query;
 
     let tasks = [];

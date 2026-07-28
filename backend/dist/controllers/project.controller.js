@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createProject = async (req, res) => {
     try {
-        const { workspaceId } = req.params;
+        const workspaceId = req.params.workspaceId;
         const { name, description, status, priority, startDate, endDate } = req.body;
         const project = await prisma.project.create({
             data: {
@@ -28,7 +28,7 @@ const createProject = async (req, res) => {
 exports.createProject = createProject;
 const updateProject = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const { name, description, status, priority, startDate, endDate } = req.body;
         const project = await prisma.project.update({
             where: { id: projectId },
@@ -50,7 +50,7 @@ const updateProject = async (req, res) => {
 exports.updateProject = updateProject;
 const archiveProject = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const project = await prisma.project.update({
             where: { id: projectId },
             data: { status: client_1.ProjectStatus.ARCHIVED },
@@ -64,7 +64,7 @@ const archiveProject = async (req, res) => {
 exports.archiveProject = archiveProject;
 const deleteProject = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         await prisma.project.delete({
             where: { id: projectId }
         });

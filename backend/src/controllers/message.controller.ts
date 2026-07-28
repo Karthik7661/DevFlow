@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export const getMessages = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const uid = req.user?.uid;
     if (!uid) { res.status(401).json({ message: 'Unauthorized' }); return; }
 
@@ -30,7 +30,7 @@ export const getMessages = async (req: AuthenticatedRequest, res: Response): Pro
 
 export const sendMessage = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const { content } = req.body;
     const uid = req.user?.uid;
 
@@ -66,11 +66,12 @@ export const sendMessage = async (req: AuthenticatedRequest, res: Response): Pro
       });
 
       if (members.length > 0) {
+        const senderName = message.sender ? (message.sender.fullName || message.sender.email) : 'Someone';
         await prisma.notification.createMany({
           data: members.map(member => ({
             userId: member.userId,
             title: 'New Team Message',
-            message: `${message.sender.fullName || message.sender.email}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+            message: `${senderName}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
             link: '/dashboard/chat'
           }))
         });

@@ -16,7 +16,7 @@ export const checkProjectAccess = (allowedRoles: WorkspaceRole[]) => {
       }
 
       const project = await prisma.project.findUnique({
-        where: { id: projectId }
+        where: { id: projectId as string }
       });
 
       if (!project) {

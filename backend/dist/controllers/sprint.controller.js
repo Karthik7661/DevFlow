@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createSprint = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const { name, goal, startDate, endDate } = req.body;
         const sprint = await prisma.sprint.create({
             data: {
@@ -25,7 +25,7 @@ const createSprint = async (req, res) => {
 exports.createSprint = createSprint;
 const getSprints = async (req, res) => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId;
         const sprints = await prisma.sprint.findMany({
             where: { projectId },
             include: { tasks: true }
@@ -39,7 +39,7 @@ const getSprints = async (req, res) => {
 exports.getSprints = getSprints;
 const updateSprint = async (req, res) => {
     try {
-        const { sprintId } = req.params;
+        const sprintId = req.params.sprintId;
         const { name, goal, startDate, endDate, status } = req.body;
         const sprint = await prisma.sprint.update({
             where: { id: sprintId },
@@ -60,7 +60,7 @@ const updateSprint = async (req, res) => {
 exports.updateSprint = updateSprint;
 const deleteSprint = async (req, res) => {
     try {
-        const { sprintId } = req.params;
+        const sprintId = req.params.sprintId;
         await prisma.sprint.delete({ where: { id: sprintId } });
         res.status(204).send();
     }

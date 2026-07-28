@@ -64,7 +64,7 @@ export const getWorkspaces = async (req: AuthenticatedRequest, res: Response): P
 
 export const getWorkspaceDetails = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
       include: {
@@ -123,7 +123,7 @@ export const getWorkspaceDetails = async (req: AuthenticatedRequest, res: Respon
 
 export const updateWorkspace = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const { name, description, logo } = req.body;
 
     const workspace = await prisma.workspace.update({
@@ -139,7 +139,7 @@ export const updateWorkspace = async (req: AuthenticatedRequest, res: Response):
 
 export const deleteWorkspace = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const uid = req.user?.uid;
 
     const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }});
@@ -155,7 +155,7 @@ export const deleteWorkspace = async (req: AuthenticatedRequest, res: Response):
 
 export const inviteMember = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
     const { email, role } = req.body;
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -183,7 +183,8 @@ export const inviteMember = async (req: AuthenticatedRequest, res: Response): Pr
 
 export const updateMemberRole = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId, memberId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
+    const memberId = req.params.memberId as string;
     const { role } = req.body;
 
     const updated = await prisma.workspaceMember.update({
@@ -204,7 +205,8 @@ export const updateMemberRole = async (req: AuthenticatedRequest, res: Response)
 
 export const removeMember = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { workspaceId, memberId } = req.params;
+    const workspaceId = req.params.workspaceId as string;
+    const memberId = req.params.memberId as string;
     const uid = req.user?.uid;
     
     // Check if user is removing themselves, or if they are an admin
