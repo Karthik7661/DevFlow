@@ -6,7 +6,13 @@ import { useAuthStore } from '@/store/authStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Send, Hash, Plus, MessageSquare } from 'lucide-react';
+import { Send, Hash, Plus, MessageSquare, User } from 'lucide-react';
+
+interface ChannelItem {
+  id: string;
+  name: string;
+  type: 'channel' | 'dm';
+}
 
 export default function ChatPage() {
   const { messages, loading, fetchMessages, sendMessage } = useChatStore();
@@ -14,10 +20,38 @@ export default function ChatPage() {
   const { user } = useAuthStore();
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
+  const [activeChannelId, setActiveChannelId] = useState<string>('team-chat');
+  
+  // Custom message history for demo channels/DMs
+  const [channelMessages, setChannelMessages] = useState<Record<string, Array<{ id: string; content: string; senderName: string; isMe: boolean; time: string }>>>({
+    'general': [
+      { id: '1', content: 'Welcome to the #general channel!', senderName: 'DevFlow Bot', isMe: false, time: '10:00 AM' },
+      { id: '2', content: 'Feel free to share company updates and announcements here.', senderName: 'DevFlow Bot', isMe: false, time: '10:01 AM' }
+    ],
+    'random': [
+      { id: '1', content: 'Welcome to #random! Share memes, food photos, or off-topic chat.', senderName: 'DevFlow Bot', isMe: false, time: '09:30 AM' }
+    ],
+    'alex-smith': [
+      { id: '1', content: 'Hey! Did you check the latest sprint update?', senderName: 'Alex Smith', isMe: false, time: '02:15 PM' }
+    ]
+  });
+
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialLoadRef = useRef(true);
 
-  // Fallback polling for Vercel Serverless environment
+  const channels: ChannelItem[] = [
+    { id: 'team-chat', name: 'team-chat', type: 'channel' },
+    { id: 'general', name: 'general', type: 'channel' },
+    { id: 'random', name: 'random', type: 'channel' },
+  ];
+
+  const directMessages: ChannelItem[] = [
+    { id: 'alex-smith', name: 'Alex Smith', type: 'dm' },
+  ];
+
+  const currentChannel = [...channels, ...directMessages].find(c => c.id === activeChannelId) || channels[0];
+
+  // Fallback polling for real team-chat backend
   useEffect(() => {
     if (!activeWorkspaceId) return;
     const intervalId = setInterval(() => {
@@ -28,18 +62,10 @@ export default function ChatPage() {
   }, [activeWorkspaceId, fetchMessages]);
 
   useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
-      if (isInitialLoadRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        isInitialLoadRef.current = false;
-      } else {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages.length]);
+  }, [messages.length, activeChannelId, channelMessages]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +73,22 @@ export default function ChatPage() {
 
     setSending(true);
     try {
-      await sendMessage(content);
+      if (activeChannelId === 'team-chat') {
+        await sendMessage(content);
+      } else {
+        // Handle sending to local channel/DM
+        const newMsg = {
+          id: Date.now().toString(),
+          content: content.trim(),
+          senderName: 'You',
+          isMe: true,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setChannelMessages(prev => ({
+          ...prev,
+          [activeChannelId]: [...(prev[activeChannelId] || []), newMsg]
+        }));
+      }
       setContent('');
       if (messagesContainerRef.current) {
         messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -77,77 +118,119 @@ export default function ChatPage() {
           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 mt-2">
             Text Channels
           </div>
-          <Button variant="secondary" className="w-full justify-start font-medium bg-primary/10 text-primary">
-            <Hash className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">team-chat</span>
-          </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-            <Hash className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">general</span>
-          </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-            <Hash className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">random</span>
-          </Button>
+          {channels.map((channel) => {
+            const isActive = activeChannelId === channel.id;
+            return (
+              <Button 
+                key={channel.id}
+                onClick={() => setActiveChannelId(channel.id)}
+                variant={isActive ? "secondary" : "ghost"} 
+                className={`w-full justify-start font-medium transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Hash className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">{channel.name}</span>
+              </Button>
+            );
+          })}
           
           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-1">
             Direct Messages
           </div>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-            <MessageSquare className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">Alex Smith</span>
-          </Button>
+          {directMessages.map((dm) => {
+            const isActive = activeChannelId === dm.id;
+            return (
+              <Button 
+                key={dm.id}
+                onClick={() => setActiveChannelId(dm.id)}
+                variant={isActive ? "secondary" : "ghost"} 
+                className={`w-full justify-start transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <User className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate">{dm.name}</span>
+              </Button>
+            );
+          })}
         </div>
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-background/50 relative">
         <div className="h-14 flex items-center px-6 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 shrink-0">
-          <Hash className="h-5 w-5 text-muted-foreground mr-2" />
-          <h2 className="text-lg font-semibold tracking-tight">team-chat</h2>
+          {currentChannel.type === 'channel' ? (
+            <Hash className="h-5 w-5 text-muted-foreground mr-2" />
+          ) : (
+            <User className="h-5 w-5 text-muted-foreground mr-2" />
+          )}
+          <h2 className="text-lg font-semibold tracking-tight">{currentChannel.name}</h2>
         </div>
 
         <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
-          {loading ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-10">
-              <Hash className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          ) : (
-            messages.map((message, index) => {
-              const isMe = message.senderId === user?.uid;
-              const showHeader = index === 0 || messages[index - 1].senderId !== message.senderId || 
-                new Date(message.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime() > 5 * 60000;
+          {activeChannelId === 'team-chat' ? (
+            loading ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-10">
+                <Hash className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>No messages yet in #team-chat. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((message, index) => {
+                const isMe = message.senderId === user?.uid;
+                const showHeader = index === 0 || messages[index - 1].senderId !== message.senderId || 
+                  new Date(message.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime() > 5 * 60000;
 
-              return (
-                <div key={message.id} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {showHeader ? (
-                    <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mt-1">
-                      {message.sender?.fullName ? message.sender.fullName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  ) : (
-                    <div className="w-10 shrink-0" />
-                  )}
-                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                    {showHeader && (
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-semibold text-sm">{isMe ? 'You' : (message.sender?.fullName || 'User')}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                return (
+                  <div key={message.id} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {showHeader ? (
+                      <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mt-1">
+                        {message.sender?.fullName ? message.sender.fullName.charAt(0).toUpperCase() : 'U'}
                       </div>
+                    ) : (
+                      <div className="w-10 shrink-0" />
                     )}
-                    <div className={`px-4 py-2.5 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                      {showHeader && (
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="font-semibold text-sm">{isMe ? 'You' : (message.sender?.fullName || 'User')}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      )}
+                      <div className={`px-4 py-2.5 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
+                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )
+          ) : (
+            (channelMessages[activeChannelId] || []).length === 0 ? (
+              <div className="text-center text-muted-foreground py-10">
+                <Hash className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>No messages yet in #{currentChannel.name}.</p>
+              </div>
+            ) : (
+              channelMessages[activeChannelId].map((msg) => (
+                <div key={msg.id} className={`flex gap-4 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mt-1">
+                    {msg.senderName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="font-semibold text-sm">{msg.senderName}</span>
+                      <span className="text-xs text-muted-foreground">{msg.time}</span>
+                    </div>
+                    <div className={`px-4 py-2.5 rounded-2xl ${msg.isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
                   </div>
                 </div>
-              );
-            })
+              ))
+            )
           )}
         </div>
 
@@ -156,7 +239,7 @@ export default function ChatPage() {
             <Input 
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Type a message..." 
+              placeholder={`Message #${currentChannel.name}...`} 
               className="flex-1 bg-muted/50 border-0 focus-visible:ring-1"
               disabled={sending}
             />
@@ -169,4 +252,5 @@ export default function ChatPage() {
     </div>
   );
 }
+
 
